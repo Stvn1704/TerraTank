@@ -7,7 +7,7 @@ import clases
 pygame.init()
 
 pantalla = pygame.display.set_mode((1280, 720))
-pygame.display.set_caption("Animación de tanque que apunta y dispara")
+pygame.display.set_caption("Terra Plane")
 
 
 WHITE = (255, 255, 255)
