@@ -14,7 +14,7 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
 
-background_image = pygame.image.load('fondo.jpg')
+background_image = pygame.image.load('fondo_nuevo.jpg')
 background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 
 arrow_x = 250
