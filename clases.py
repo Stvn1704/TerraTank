@@ -64,19 +64,4 @@ class Mapa:
             print(f"Objeto de curación en {objeto.posicion}, que cura {objeto.cantidad}")
 
 
-jugador = Personaje("Héroe", 100, 20)
 
-mapa = Mapa(10, 10)
-
-mapa.agregar_obstaculo(Obstaculo("Roca", (3, 3)))
-
-mapa.agregar_objeto_curacion(ObjetoCuracion(30, (5, 5)))
-
-jugador.mover((4, 4))
-
-jugador.recibir_daño(40)
-
-objeto_curacion = ObjetoCuracion(20, (4, 4))
-objeto_curacion.usar(jugador)
-
-mapa.mostrar_mapa()
