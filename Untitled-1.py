@@ -1,1 +1,0 @@
-mensaje = "hola"
