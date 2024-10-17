@@ -40,13 +40,13 @@ while running:
 
     # Mover la flecha con las teclas de flechas
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]:
+    if keys[pygame.K_LEFT]|keys[pygame.K_a]:
         arrow_x -= speed  # Mover a la izquierda
-    if keys[pygame.K_RIGHT]:
+    if keys[pygame.K_RIGHT]|keys[pygame.K_d]:
         arrow_x += speed  # Mover a la derecha
-    if keys[pygame.K_UP]:
+    if keys[pygame.K_UP]|keys[pygame.K_w]:
         arrow_y -= speed  # Mover hacia arriba
-    if keys[pygame.K_DOWN]:
+    if keys[pygame.K_DOWN]|keys[pygame.K_s]:
         arrow_y += speed  # Mover hacia abajo
 
     # Limpiar la pantalla
