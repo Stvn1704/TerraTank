@@ -1,13 +1,10 @@
 
-class Personaje:
-    def __init__(self, nombre, vida, daño, ):
+class Jugador:
+    vida = 100
+    daño = 10
+    size = 180
+    def __init__(self, nombre):
         self.nombre = nombre
-        self.vida = vida
-        self.daño = daño
-    
-    def mover(self, nueva_posicion):
-        self.posicion = nueva_posicion
-        print(f"{self.nombre} se ha movido a la posición {self.posicion}")
     
     def recibir_daño(self, cantidad):
         self.vida -= cantidad
