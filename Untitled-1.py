@@ -1,7 +1,7 @@
 import pygame 
 
 ANCHO = 1000
-ALTO = 800
+ALTO = 600
 VENTANA = pygame.display.set_mode([ANCHO, ALTO])
 
 jugando = True 
