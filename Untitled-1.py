@@ -1,27 +1,36 @@
 import pygame
 import math
+import os
 
 # Inicializamos Pygame
 pygame.init()
 
 # Definimos el tamaño de la ventana
 screen = pygame.display.set_mode((1280, 720))
-pygame.display.set_caption("Flecha que apunta y dispara")
+pygame.display.set_caption("Animación de tanque que apunta y dispara")
 
-# Definimos colores (RGB)
+# Definimos colores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 
-# Definimos la posición, tamaño y velocidad de la flecha
-arrow_x = 250
-arrow_y = 250
-arrow_width = 60
-arrow_height = 10
-speed = 1
+# Definimos la posición inicial y velocidad
+arrow_x = 100
+arrow_y = 100
+speed = 5
 
-# Crear una superficie para la flecha (una flecha dibujada)
-arrow_surf = pygame.Surface((arrow_width, arrow_height), pygame.SRCALPHA)  # Superficie con transparencia
-pygame.draw.polygon(arrow_surf, BLACK, [(0, 5), (50, 5), (50, 0), (60, 10), (50, 20), (50, 15), (0, 15)])
+# Cargar los cuadros de la animación
+frames = []
+frame_count = 0
+frame_duration = 5  # Cuántos ciclos de reloj mostrar cada cuadro
+current_frame = 0
+
+# Cargar imágenes de un directorio específico
+frame_directory = "Movimiento"  # Cambia esto al directorio donde están tus cuadros
+
+for filename in sorted(os.listdir(frame_directory)):
+    if filename.endswith('.gif'):  # Asegúrate de que sean archivos PNG
+        frame = pygame.image.load(os.path.join(frame_directory, filename))
+        frames.append(frame)
 
 # Bucle principal
 running = True
@@ -33,31 +42,40 @@ while running:
     # Obtener la posición del mouse
     mouse_x, mouse_y = pygame.mouse.get_pos()
 
-    # Calcular el ángulo entre la flecha y el mouse
+    # Calcular el ángulo entre el tanque y el mouse
     dx = mouse_x - arrow_x
     dy = mouse_y - arrow_y
-    angle = math.atan2(dy, dx)  # Ángulo en radianes
+    angle = math.atan2(dy, dx)
 
-    # Mover la flecha con las teclas de flechas
+    # Mover el tanque con las teclas de flechas
     keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT]|keys[pygame.K_a]:
+    if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         arrow_x -= speed  # Mover a la izquierda
-    if keys[pygame.K_RIGHT]|keys[pygame.K_d]:
+    if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
         arrow_x += speed  # Mover a la derecha
-    if keys[pygame.K_UP]|keys[pygame.K_w]:
+    if keys[pygame.K_UP] or keys[pygame.K_w]:
         arrow_y -= speed  # Mover hacia arriba
-    if keys[pygame.K_DOWN]|keys[pygame.K_s]:
+    if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         arrow_y += speed  # Mover hacia abajo
 
     # Limpiar la pantalla
     screen.fill(WHITE)
 
-    # Rotar la superficie de la flecha según el ángulo calculado
-    rotated_surf = pygame.transform.rotate(arrow_surf, -math.degrees(angle))
-    rotated_rect = rotated_surf.get_rect(center=(arrow_x, arrow_y))
+    # Actualizar el cuadro de la animación
+    frame_count += 1
+    if frame_count >= frame_duration:
+        frame_count = 0
+        current_frame = (current_frame + 1) % len(frames)  # Avanzar al siguiente cuadro
 
-    # Dibujar la flecha rotada
-    screen.blit(rotated_surf, rotated_rect.topleft)
+    # Obtener el cuadro actual de la animación
+    current_image = frames[current_frame]
+
+    # Rotar la imagen según el ángulo calculado
+    rotated_image = pygame.transform.rotate(current_image, -math.degrees(angle))
+    rotated_rect = rotated_image.get_rect(center=(arrow_x, arrow_y))
+
+    # Dibujar la imagen rotada
+    screen.blit(rotated_image, rotated_rect.topleft)
 
     # Actualizar la pantalla
     pygame.display.flip()
