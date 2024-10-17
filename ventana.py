@@ -1,6 +1,11 @@
 import pygame
 import math
 import os
+from clases import Jugador
+
+nombre = ""
+nombre = input("Ingresa nombre: ")
+Jugador1= Jugador(nombre)
 
 pygame.init()
 
@@ -29,7 +34,7 @@ current_frame = 0
 frame_directory = "Movimiento"
 
 
-new_frame_size = (180, 180)
+new_frame_size = (Jugador1.size, Jugador1.size)
 
 for filename in sorted(os.listdir(frame_directory)):
     if filename.endswith('.gif'):
