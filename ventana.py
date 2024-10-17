@@ -18,7 +18,7 @@ frames = []
 frame_count = 0
 frame_duration = 5
 current_frame = 0
- 
+
 frame_directory = "Movimiento"
 
 for filename in sorted(os.listdir(frame_directory)):
