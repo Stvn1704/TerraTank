@@ -4,11 +4,18 @@ import os
 
 pygame.init()
 
-screen = pygame.display.set_mode((1280, 720))
+
+screen_width = 1280
+screen_height = 720
+screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption("Animación de tanque que apunta y dispara")
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+
+
+background_image = pygame.image.load('fondo.jpg')
+background_image = pygame.transform.scale(background_image, (screen_width, screen_height))
 
 arrow_x = 250
 arrow_y = 250
@@ -21,10 +28,17 @@ current_frame = 0
 
 frame_directory = "Movimiento"
 
+
+new_frame_size = (180, 180)
+
 for filename in sorted(os.listdir(frame_directory)):
     if filename.endswith('.gif'):
         frame = pygame.image.load(os.path.join(frame_directory, filename))
-        frames.append(frame)
+        
+        
+        resized_frame = pygame.transform.scale(frame, new_frame_size)
+        
+        frames.append(resized_frame)
 
 print(f"Se han cargado {len(frames)} cuadros.")
 
@@ -77,7 +91,8 @@ while running:
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         arrow_y += speed
 
-    screen.fill(WHITE)
+    
+    screen.blit(background_image, (0, 0))
 
     frame_count += 1
     if frame_count >= frame_duration:

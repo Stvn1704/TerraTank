@@ -1,9 +1,6 @@
-"""aqui hice lo basico basico de clases, no se como funciona el movimiento de un personaje en el mapa
- asi que no tengo idea de si es con ubicaciones tipo coordenadas, por eso hice la clase mapa
- se puede eliminar si se requiere, de resto imagino seran los metodos necesarios para las interacciones en el juego"""
 
 class Personaje:
-    def __init__(self, nombre, vida, daño):
+    def __init__(self, nombre, vida, daño, ):
         self.nombre = nombre
         self.vida = vida
         self.daño = daño
