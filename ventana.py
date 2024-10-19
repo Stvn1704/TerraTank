@@ -14,15 +14,14 @@ Jugador1 = Jugador(nombre)
 screen_width = 1280
 screen_height = 720
 screen = pygame.display.set_mode((screen_width, screen_height))
-pygame.display.set_caption("Animación de tanque que apunta y dispara")
-
+pygame.display.set_caption("TerraPlane")
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 
 # Cargar imagen de fondo
 background_image = pygame.image.load('fondo_nuevo.jpg')
-background_image = pygame.transform.scale(background_image, (screen_width * 12, screen_height * 12))
+background_image = pygame.transform.scale(background_image, (screen_width * 2, screen_height * 2))
 
 # Obtener dimensiones de la imagen de fondo
 background_width = background_image.get_width()
@@ -66,6 +65,7 @@ class Projectile:
         self.speed = bullet_speed
 
     def update(self):
+        # Actualiza la posición del proyectil sin límites
         self.x += self.speed * math.cos(self.angle)
         self.y += self.speed * math.sin(self.angle)
 
@@ -146,9 +146,10 @@ while running:
     mini_map_width = 200
     mini_map_height = 200
     mini_map_rect = pygame.Rect(20, screen_height - mini_map_height - 20, mini_map_width, mini_map_height)
-
+    
     # Dibujar el rectángulo del mini mapa
     pygame.draw.rect(screen, BLACK, mini_map_rect, 2)
+    
 
     # Dibujar el fondo del mini mapa
     mini_map_scale_x = mini_map_width / background_width
@@ -172,19 +173,3 @@ while running:
 
 
 pygame.quit()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
