@@ -1,35 +1,61 @@
 import pygame
-import math
+import socket
+import json
 import os
-from clases import Jugador
+import math
+
+# Definición de la clase Jugador
+class Jugador:
+    def __init__(self, nombre):
+        self.nombre = nombre
+        self.size = 50  # Puedes ajustar el tamaño según tus necesidades
+
+# Obtener el nombre del jugador antes de inicializar Pygame
+nombre = input("Ingresa nombre: ")
 
 # Inicializar Pygame
 pygame.init()
 
-# Obtener el nombre del jugador
-nombre = input("Ingresa nombre: ")
-Jugador1 = Jugador(nombre)
-
-# Configuración de la pantalla
-screen_width = 1280
-screen_height = 720
-screen = pygame.display.set_mode((screen_width, screen_height))
+# Configuración de la ventana
+WIDTH, HEIGHT = 1280, 720
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("TerraPlane")
+
+# Inicializar el reloj para la sincronización de frames
+clock = pygame.time.Clock()
+
+# Configuración del socket
+server_address = ('127.0.0.1', 5555)  # Asegúrate de que coincida con el servidor
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Conexión al servidor
+try:
+    client_socket.connect(server_address)  # Conectar al servidor
+    print("Conexión exitosa al servidor.")
+except ConnectionRefusedError:
+    print("No se pudo conectar al servidor. Asegúrate de que esté en ejecución.")
+    exit()
+
+# Instanciar el jugador
+Jugador1 = Jugador(nombre)  # Asegúrate de que la clase Jugador esté definida correctamente
+client_socket.send(nombre.encode('utf-8'))  # Enviar el nombre del jugador al servidor
+
+# Configuración de colores
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 GREEN = (0, 255, 0)
 
 # Cargar imagen de fondo
 background_image = pygame.image.load('fondo_nuevo.jpg')
-background_image = pygame.transform.scale(background_image, (screen_width * 2, screen_height * 2))
+background_image = pygame.transform.scale(background_image, (WIDTH * 2, HEIGHT * 2))
 
 # Obtener dimensiones de la imagen de fondo
 background_width = background_image.get_width()
 background_height = background_image.get_height()
 
 # Posición inicial del avión (centrado en la pantalla)
-arrow_x = screen_width // 2
-arrow_y = screen_height // 2
+arrow_x = WIDTH // 2
+arrow_y = HEIGHT // 2
 
 # Velocidades
 player_speed = 25  # Velocidad del avión
@@ -38,6 +64,10 @@ bullet_speed = 25  # Velocidad de las balas
 # Inicializar offset (desplazamiento del fondo)
 offset_x = 0
 offset_y = 0
+
+# Definir el margen de seguridad
+safety_margin_x = WIDTH // 4  # Un margen de seguridad horizontal
+safety_margin_y = HEIGHT // 4  # Un margen de seguridad vertical
 
 frames = []
 frame_count = 0
@@ -92,37 +122,40 @@ while running:
             projectile_y = arrow_y + 60 * math.sin(angle)
             projectiles.append(Projectile(projectile_x, projectile_y, angle))
 
-
-    safety_margin = 100
     # Movimiento del avión
+    # Obtener las teclas presionadas
     keys = pygame.key.get_pressed()
-    # Movimiento del avión con límites del fondo
-    # Movimiento del avión con límite de fondo y margen de seguridad
+    x_move, y_move = 0, 0  # Movimientos del avión
+
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
-        arrow_x -= player_speed
-        if arrow_x < safety_margin:
-            arrow_x = safety_margin
-            offset_x = max(0, offset_x - player_speed)  # Mover el fondo a la izquierda
-
+        x_move -= player_speed
     if keys[pygame.K_RIGHT] or keys[pygame.K_d]:
-        arrow_x += player_speed
-        if arrow_x > screen_width - safety_margin:
-            arrow_x = screen_width - safety_margin
-            offset_x = min(background_width - screen_width, offset_x + player_speed)  # Mover el fondo a la derecha
-
+        x_move += player_speed
     if keys[pygame.K_UP] or keys[pygame.K_w]:
-        arrow_y -= player_speed
-        if arrow_y < safety_margin:
-            arrow_y = safety_margin
-            offset_y = max(0, offset_y - player_speed)  # Mover el fondo hacia arriba
-
+        y_move -= player_speed
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
-        arrow_y += player_speed
-        if arrow_y > screen_height - safety_margin:
-            arrow_y = screen_height - safety_margin
-            offset_y = min(background_height - screen_height, offset_y + player_speed)  # Mover el fondo hacia abajo
+        y_move += player_speed
 
-    # Dibujar el fondo desplazado
+    # Actualizar la posición del avión
+    arrow_x += x_move
+    arrow_y += y_move
+
+    # Ajustar el offset (posición de la cámara) para que el avión esté siempre visible
+    if arrow_x < offset_x + safety_margin_x:
+        offset_x = max(0, arrow_x - safety_margin_x)
+    if arrow_x > offset_x + WIDTH - safety_margin_x:
+        offset_x = min(background_width - WIDTH, arrow_x - (WIDTH - safety_margin_x))
+
+    if arrow_y < offset_y + safety_margin_y:
+        offset_y = max(0, arrow_y - safety_margin_y)
+    if arrow_y > offset_y + HEIGHT - safety_margin_y:
+        offset_y = min(background_height - HEIGHT, arrow_y - (HEIGHT - safety_margin_y))
+
+    # Enviar la posición del jugador al servidor
+    data = {"type": "move", "x": arrow_x, "y": arrow_y}
+    client_socket.send(json.dumps(data).encode('utf-8'))
+
+    # Actualizar el fondo
     screen.blit(background_image, (-offset_x, -offset_y))
 
     # Rotar el avión hacia el puntero del ratón
@@ -145,22 +178,21 @@ while running:
     # Dibujar el mini mapa
     mini_map_width = 200
     mini_map_height = 200
-    mini_map_rect = pygame.Rect(20, screen_height - mini_map_height - 20, mini_map_width, mini_map_height)
-    
+    mini_map_rect = pygame.Rect(20, HEIGHT - mini_map_height - 20, mini_map_width, mini_map_height)
+
     # Dibujar el rectángulo del mini mapa
     pygame.draw.rect(screen, BLACK, mini_map_rect, 2)
-    
 
     # Dibujar el fondo del mini mapa
-    mini_map_scale_x = mini_map_width / background_width
-    mini_map_scale_y = mini_map_height / background_height
+    mini_map_scale_x = mini_map_width / background_image.get_width()
+    mini_map_scale_y = mini_map_height / background_image.get_height()
 
-    mini_map_background = pygame.transform.scale(background_image, (int(background_width * mini_map_scale_x), int(background_height * mini_map_scale_y)))
+    mini_map_background = pygame.transform.scale(background_image, (int(background_image.get_width() * mini_map_scale_x), int(background_image.get_height() * mini_map_scale_y)))
     screen.blit(mini_map_background, mini_map_rect.topleft)
 
     # Calcular la posición del avión en el mini mapa de manera proporcional
-    mini_map_arrow_x = ((arrow_x + offset_x) / background_width) * mini_map_width + mini_map_rect.x
-    mini_map_arrow_y = ((arrow_y + offset_y) / background_height) * mini_map_height + mini_map_rect.y
+    mini_map_arrow_x = ((arrow_x + offset_x) / background_image.get_width()) * mini_map_width + mini_map_rect.x
+    mini_map_arrow_y = ((arrow_y + offset_y) / background_image.get_height()) * mini_map_height + mini_map_rect.y
 
     # Limitar la posición del punto verde dentro del rectángulo del minimapa
     mini_map_arrow_x = max(mini_map_rect.x, min(mini_map_arrow_x, mini_map_rect.right))
@@ -169,7 +201,13 @@ while running:
     # Dibujar la posición del avión en el mini mapa
     pygame.draw.circle(screen, GREEN, (int(mini_map_arrow_x), int(mini_map_arrow_y)), 5)
 
+    # Actualizar la pantalla
     pygame.display.flip()
 
+    # Controlar la tasa de frames
+    clock.tick(60)  # Limitar a 60 FPS
 
+# Cierre de la conexión y Pygame
+client_socket.close()
 pygame.quit()
+
