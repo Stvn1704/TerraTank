@@ -2,7 +2,7 @@ import pygame
 import math
 import os
 from clases import Jugador
-
+#prueba
 # Inicializar Pygame
 pygame.init()
 
