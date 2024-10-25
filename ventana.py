@@ -58,19 +58,32 @@ print(f"Se han cargado {len(frames)} cuadros.")
 
 # Clase para los proyectiles (balas)
 class Projectile:
-    def __init__(self, x, y, angle):
-        self.x = x
-        self.y = y
+    def __init__(self, x, y, angle, max_distance=500):  # Agregamos una distancia máxima de 500 píxeles
+        self.map_x = x  # Posición en el mapa, no en la pantalla
+        self.map_y = y  # Posición en el mapa, no en la pantalla
         self.angle = angle
         self.speed = bullet_speed
+        self.start_x = x
+        self.start_y = y
+        self.max_distance = max_distance  # Distancia máxima que viajará el proyectil
+        self.traveled_distance = 0  # Distancia recorrida hasta ahora
 
     def update(self):
-        # Actualiza la posición del proyectil sin límites
-        self.x += self.speed * math.cos(self.angle)
-        self.y += self.speed * math.sin(self.angle)
+        # Actualiza la posición del proyectil en el mapa
+        self.map_x += self.speed * math.cos(self.angle)
+        self.map_y += self.speed * math.sin(self.angle)
+        self.traveled_distance = math.sqrt((self.map_x - self.start_x)**2 + (self.map_y - self.start_y)**2)
+        
+        # Eliminar el proyectil si ha viajado más allá de la distancia máxima
+        if self.traveled_distance >= self.max_distance:
+            projectiles.remove(self)
 
-    def draw(self, surface):
-        pygame.draw.circle(surface, WHITE, (int(self.x), int(self.y)), 5)
+    def draw(self, surface, offset_x, offset_y):
+        # Dibujar el proyectil en la pantalla ajustando el offset del mapa
+        screen_x = self.map_x - offset_x
+        screen_y = self.map_y - offset_y
+        pygame.draw.circle(surface, WHITE, (int(screen_x), int(screen_y)), 5)
+
 
 projectiles = []
 
@@ -88,16 +101,16 @@ while running:
             dy = mouse_y - arrow_y
             angle = math.atan2(dy, dx)
 
-            projectile_x = arrow_x + 60 * math.cos(angle)
-            projectile_y = arrow_y + 60 * math.sin(angle)
+            # Calcular la posición en el mapa donde se disparó el proyectil
+            projectile_x = arrow_x + offset_x + 60 * math.cos(angle)
+            projectile_y = arrow_y + offset_y + 60 * math.sin(angle)
             projectiles.append(Projectile(projectile_x, projectile_y, angle))
 
 
     safety_margin = 100
     # Movimiento del avión
     keys = pygame.key.get_pressed()
-    # Movimiento del avión con límites del fondo
-    # Movimiento del avión con límite de fondo y margen de seguridad
+
     if keys[pygame.K_LEFT] or keys[pygame.K_a]:
         arrow_x -= player_speed
         if arrow_x < safety_margin:
@@ -140,7 +153,7 @@ while running:
     # Actualizar y dibujar los proyectiles (balas)
     for projectile in projectiles:
         projectile.update()
-        projectile.draw(screen)
+        projectile.draw(screen, offset_x, offset_y)  # Ajustar el dibujo de los proyectiles al offset del mapa
 
     # Dibujar el mini mapa
     mini_map_width = 200
