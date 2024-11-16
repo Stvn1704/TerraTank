@@ -1,20 +1,38 @@
 import pygame
+from Button import *
+from ventana import *
+pygame.init()
 
-class Buttons:
-    def __init__(self, image_path, hover_image_path, x, y, width, height):
-        self.rect = pygame.Rect(x, y, width, height)
-        self.image = pygame.image.load(image_path)
-        self.hover_image = pygame.image.load(hover_image_path)
-        self.image = pygame.transform.scale(self.image, (width, height))
-        self.hover_image = pygame.transform.scale(self.hover_image, (width, height))
+def set_Botones():
+    Boton_alto = 50
+    Boton_ancho = 220
+    boton_jugar = Buttons("Image/Start_BTN.png","Image/Start_BTN.png",300,270, Boton_ancho,Boton_alto)
+    boton_salir = Buttons("Image/Exit_BTN.png","Image/Exit_BTN.png",300,350, Boton_ancho,Boton_alto)
+    return boton_jugar,boton_salir
 
-    def draw(self, surface, mouse_pos):
-        # Cambiar la imagen si el mouse está sobre el botón
-        if self.is_clicked(mouse_pos):
-            surface.blit(self.hover_image, self.rect.topleft)
-        else:
-            surface.blit(self.image, self.rect.topleft)
+def Menu():
+    screen = pygame.display.set_mode((800,600))
+    fondo_cargar = pygame.image.load("Image/BG.png")
+    fondo_1 = pygame.transform.scale(fondo_cargar,(800,600))
+    boton_jugar, boton_salir = set_Botones()
+    while True:
+        pos_mouse = pygame.mouse.get_pos()
+        for event in pygame.event.get():
+            
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = event.pos
+                if boton_jugar.is_clicked(mouse_pos):
+                    #Inicia juego
+                    play()
+                    pygame.quit()
+                if boton_salir.is_clicked(mouse_pos):
+                    pygame.quit()
+        screen.blit(fondo_1,(0,0))
+        boton_jugar.draw(screen,pos_mouse)
+        boton_salir.draw(screen,pos_mouse)
+        pygame.display.flip()
 
-    def is_clicked(self, pos):
-        # Comprobar si el botón fue clickeado o si el mouse esta encima del boton
-        return self.rect.collidepoint(pos)
+Menu()
