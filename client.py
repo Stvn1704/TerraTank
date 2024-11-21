@@ -26,6 +26,8 @@ screen_pos_y = screen_height // 2
 player_speed = 25  # Velocidad del avión
 bullet_speed = 25  # Velocidad de las balas
 angle = 0  # Dirección del disparo en radianes.
+screen_pos_x1= screen_width // 2
+screen_pos_y1= screen_width // 2
 
 
 offset_x = offset_y = 0 # Inicializar offset (desplazamiento del fondo)
@@ -60,7 +62,6 @@ background_width, background_height = background_image.get_width(), background_i
 nombre = input("Ingresa nombre: ")
 Jugador1 = Jugador(puerto_local, nombre)
 
-       
 # Función para cargar los cuadros de animación del avión desde el directorio Movimiento y los redimensiona para ajustarse al tamaño del jugador.
 def load_frames():
     new_frame_size = (Jugador1.size, Jugador1.size)
@@ -77,15 +78,7 @@ def send_to_server(data):
     client_socket.sendall(json.dumps(data).encode("utf-8"))
 
 # Renderizar jugadores remotos
-def draw_remote_players():
-    with players_lock: #Bloquear el acceso durante la lectura
-        for player_id, player in players.items():
-            if str(player_id) != str(Jugador1.id):
-                player_screen_x = player.x
-                player_screen_y = player.y
-                rotated_image = pygame.transform.rotate(frames[0], -math.degrees(player.angle))
-                rotated_rect = rotated_image.get_rect(center=(player_screen_x, player_screen_y))
-                screen.blit(rotated_image, rotated_rect.topleft)
+
             
 # Actualizar información de jugadores remotos
 def update_remote_players(server_data):
@@ -192,10 +185,7 @@ def create_projectile(event):
     projectile_x = screen_pos_x + offset_x + 60 * math.cos(angle)
     projectile_y = screen_pos_y + offset_y + 60 * math.sin(angle)
     projectiles_local.append(Projectile(projectile_x, projectile_y, angle))
-    for projectile in projectiles_local:
-        projectile.update()
-        last_traveled_distance = projectile.get_distance()
-    send_to_server({"type": "shot", "x": projectile_x, "y": projectile_y,"owner": Jugador1.id, "angle": angle, "traveled_distance": last_traveled_distance})
+    send_to_server({"type": "shot", "x": projectile_x, "y": projectile_y,"owner": Jugador1.id, "angle": angle,})
 send_to_server(
     {"type": "shot",
      "x": 0,
@@ -267,6 +257,25 @@ def mini_map():
     # Dibujar la posición del avión en el mini mapa
     pygame.draw.circle(screen, GREEN, (int(mini_map_screen_pos_x), int(mini_map_screen_pos_y)), 5)
 
+def load_image(frame_file):
+    # Cargar la imagen desde la carpeta raíz
+    frame = pygame.image.load(frame_file)
+    # Redimensionar la imagen si es necesario
+    resized_frame = pygame.transform.scale(frame, (Jugador1.size, Jugador1.size))
+    return resized_frame
+frame_file= "frame-1.gif"
+frame_image= load_image(frame_file)
+def draw_remote_players():
+    global players
+    with players_lock: #Bloquear el acceso durante la lectura
+        for player_id, player in players.items():
+            if str(player_id) != str(Jugador1.id):
+                player_screen_x = player.x
+                player_screen_y = player.y
+                rotated_image = pygame.transform.rotate(frame_image, -math.degrees(player.angle))
+                rotated_rect = rotated_image.get_rect(center=(player_screen_x, player_screen_y))
+                screen.blit(rotated_image, rotated_rect.topleft)
+                print(player_screen_x,player_screen_y,player.angle)
 # Renderizar todos los elementos
 def render():
     # Dibujar el fondo desplazado. 
@@ -277,9 +286,9 @@ def render():
         mouse_x, mouse_y = pygame.mouse.get_pos()
         dx, dy = mouse_x - screen_pos_x, mouse_y - screen_pos_y
         angle = math.atan2(dy, dx)
-
+        
         # Rotar el primer cuadro de animación según el ángulo hacia el mouse
-        rotated_image = pygame.transform.rotate(frames[0], -math.degrees(angle))
+        rotated_image = pygame.transform.rotate(frame_image, -math.degrees(angle))
         rotated_rect = rotated_image.get_rect(center=(screen_pos_x, screen_pos_y))
         
         # Dibujar el avión rotado en la pantalla
@@ -311,6 +320,7 @@ def main():
         running = handle_events()
         update_players()
         render()
+        draw_remote_players()
         pygame.display.flip()
     pygame.quit()
     client_socket.close()
