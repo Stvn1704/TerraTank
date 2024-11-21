@@ -9,6 +9,14 @@ players = {}
 projectiles = []
 lock = threading.Lock()  # Evita que varios hilos accedan a la vez a los datos compartidos
 
+def update_projectiles():
+    global projectiles
+    for projectile in projectiles[:]:
+        projectile["traveled_distance"] += 1  # Actualiza la distancia recorrida
+        if projectile["traveled_distance"] >= projectile["max_distance"]:
+            projectiles.remove(projectile)
+            print("Proyectil removido:")
+
 # Manejar la conexión de un cliente
 def handle_client(client_socket, addr):
     global projectiles, players, lock
@@ -43,7 +51,7 @@ def handle_client(client_socket, addr):
                         players[player_id]["x"] = message["x"]
                         players[player_id]["y"] = message["y"]
                         players[player_id]["angle"] = message["angle"]
-                        print(f"posición player: {players[player_id]}")
+
 
                 elif message["type"] == "shot":
                     
@@ -64,7 +72,7 @@ def handle_client(client_socket, addr):
                     "projectiles": projectiles
                 }
             client_socket.sendall(json.dumps(game_state).encode("utf-8"))
-            projectiles = []
+            update_projectiles()
             
 
     except Exception as e:
@@ -91,7 +99,7 @@ def run_server():
         print(f"Accepted connection from {addr}")
         thread = threading.Thread(target=handle_client, args=(client_socket, addr))
         thread.start()
-
+        
 
 
         time.sleep(1 / 60)  # Actualización a 60 FPS

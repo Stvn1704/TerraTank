@@ -5,13 +5,16 @@ import os
 import threading  # Maneja la recepción de datos del servidor en paralelo al juego.
 import json
 from clases import Jugador
-
+last_traveled_distance = 0 
 players_lock = threading.Lock()
 
 projectiles = []
+projectiles_local= []
 
 players = {}
-    
+
+last_shot_time = 0  # Tiempo del último disparo
+shoot_cooldown = 500
 
 # Variables y constantes del juego
 WHITE = (255, 255, 255)
@@ -57,52 +60,7 @@ background_width, background_height = background_image.get_width(), background_i
 nombre = input("Ingresa nombre: ")
 Jugador1 = Jugador(puerto_local, nombre)
 
-
-# Clase para proyectiles
-class Projectile:
-    def __init__(self, x, y, angle, max_distance=600):  # Agregamos una distancia máxima de 500 píxeles
-        self.map_x, self.map_y = x, y  # Posición en el mapa, no en la pantalla
-        self.angle = angle
-        self.speed = bullet_speed
-        self.start_x, self.start_y = x, y
-        self.max_distance = max_distance  # Distancia máxima que viajará el proyectil
-        self.traveled_distance = 0  # Distancia recorrida hasta ahora
-
-    def update(self):   # Calcula la nueva posición del proyectil según su velocidad y ángulo. Si supera la distancia máxima, se elimina del juego
-        # Actualiza la posición del proyectil en el mapa
-        self.map_x += self.speed * math.cos(self.angle)
-        self.map_y += self.speed * math.sin(self.angle)
-        self.traveled_distance = math.sqrt((self.map_x - self.start_x)**2 + (self.map_y - self.start_y)**2)
-        
-        # Eliminar el proyectil si ha viajado más allá de la distancia máxima
-        if self.traveled_distance >= self.max_distance:
-            if self in projectiles:
-                projectiles.remove(self)
-            
-    def draw(self, surface, offset_x, offset_y): 
-        # Dibuja el proyectil en la pantalla ajustando el desplazamiento (offset_x, offset_y) del mapa.
-        screen_x = self.map_x - offset_x
-        screen_y = self.map_y - offset_y
-        pygame.draw.circle(surface, WHITE, (int(screen_x), int(screen_y)), 5)
-
-
-def receive_data_from_server():
-    while True:
-        try:
-            data = client_socket.recv(4096)
-            if data:
-                game_state = json.loads(data.decode("utf-8"))
-                
-                # Actualizar el estado del juego con la información del servidor
-                if "players" in game_state:
-                    update_remote_players(game_state.get("players", {}))
-                if "projectiles" in game_state:
-                    update_projectiles(game_state.get("projectiles", []))
-
-        except Exception as e:
-            print("Error recibiendo datos del servidor:", e)
-            break
-        
+       
 # Función para cargar los cuadros de animación del avión desde el directorio Movimiento y los redimensiona para ajustarse al tamaño del jugador.
 def load_frames():
     new_frame_size = (Jugador1.size, Jugador1.size)
@@ -154,35 +112,98 @@ def update_projectiles(server_projectiles):
 # Función para recibir actualizaciones del servidor
 
 
-
 # Inicializar el juego
 def initialize_game():
     load_frames()
 
 
 # Función para manejar los eventos de entrada
+
+class Projectile:
+    def __init__(self, x, y, angle, max_distance=600):  # Agregamos una distancia máxima de 500 píxeles
+        self.map_x, self.map_y = x, y  # Posición en el mapa, no en la pantalla
+        self.angle = angle
+        self.speed = bullet_speed
+        self.start_x, self.start_y = x, y
+        self.max_distance = max_distance  # Distancia máxima que viajará el proyectil
+        self.traveled_distance = 0
+        self.distance=0# Distancia recorrida hasta ahora
+
+    def update(self):   # Calcula la nueva posición del proyectil según su velocidad y ángulo. Si supera la distancia máxima, se elimina del juego
+        # Actualiza la posición del proyectil en el mapa
+        self.map_x += self.speed * math.cos(self.angle)
+        self.map_y += self.speed * math.sin(self.angle)
+        self.traveled_distance = math.sqrt((self.map_x - self.start_x)**2 + (self.map_y - self.start_y)**2)
+        self.distance=self.traveled_distance
+        # Eliminar el proyectil si ha viajado más allá de la distancia máxima
+        if self.traveled_distance >= self.max_distance:
+            if self in projectiles:
+                projectiles.remove(self)
+    
+    def get_distance(self):
+        self.map_x += self.speed * math.cos(self.angle)
+        self.map_y += self.speed * math.sin(self.angle)
+        self.traveled_distance = math.sqrt((self.map_x - self.start_x)**2 + (self.map_y - self.start_y)**2)
+        self.distance=self.traveled_distance
+        return self.distance
+            
+    def draw(self, surface, offset_x, offset_y): 
+        # Dibuja el proyectil en la pantalla ajustando el desplazamiento (offset_x, offset_y) del mapa.
+        screen_x = self.map_x - offset_x
+        screen_y = self.map_y - offset_y
+        pygame.draw.circle(surface, WHITE, (int(screen_x), int(screen_y)), 5)
+
+def receive_data_from_server():
+    while True:
+        try:
+            data = client_socket.recv(4096)
+            if data:
+                game_state = json.loads(data.decode("utf-8"))
+                
+                # Actualizar el estado del juego con la información del servidor
+                if "players" in game_state:
+                    update_remote_players(game_state.get("players", {}))
+                if "projectiles" in game_state:
+                    update_projectiles(game_state.get("projectiles", []))
+        except Exception as e:
+            print("Error recibiendo datos del servidor:", e)
+            break
+
 def handle_events():
-    global projectiles, offset_x, offset_y
+    global projectiles, offset_x, offset_y, last_shot_time
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             return False
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-            create_projectile(event)
+            current_time = pygame.time.get_ticks()  # Tiempo actual en milisegundos
+            if current_time - last_shot_time >= shoot_cooldown:
+                create_projectile(event)
+                last_shot_time = current_time  # Actualizamos el tiempo del último disparo
     return True
 
 # Crear proyectil
 def create_projectile(event):
-    global projectiles
+    global projectiles, projectiles_local, last_traveled_distance
     mouse_x, mouse_y = pygame.mouse.get_pos()
     dx, dy = mouse_x - screen_pos_x, mouse_y - screen_pos_y
     angle = math.atan2(dy, dx)
     # Calcular la posición en el mapa donde se disparó el proyectil
     projectile_x = screen_pos_x + offset_x + 60 * math.cos(angle)
     projectile_y = screen_pos_y + offset_y + 60 * math.sin(angle)
+    projectiles_local.append(Projectile(projectile_x, projectile_y, angle))
+    for projectile in projectiles_local:
+        projectile.update()
+        last_traveled_distance = projectile.get_distance()
+    send_to_server({"type": "shot", "x": projectile_x, "y": projectile_y,"owner": Jugador1.id, "angle": angle, "traveled_distance": last_traveled_distance})
+send_to_server(
+    {"type": "shot",
+     "x": 0,
+     "y": 0,
+     "owner": "",
+     "angle": 0,
+     "traveled_distance": 0})
 
-    send_to_server({"type": "shot", "x": projectile_x, "y": projectile_y,"owner": Jugador1.id, "angle": angle})
-
-# Actualizar movimiento del jugador local
 def update_players():
     global offset_x, offset_y
     keys = pygame.key.get_pressed()
@@ -195,31 +216,24 @@ def update_players():
     if keys[pygame.K_DOWN] or keys[pygame.K_s]:
         move_player(0, player_speed)
 
-# Función para mover al jugador y ajustar el fondo
 def move_player(player_speed_dx, player_speed_dy):
     global screen_pos_x, screen_pos_y, offset_x, offset_y
     safety_margin = 100
-
-    # Actualizar posición en la pantalla
     screen_pos_x += player_speed_dx
     screen_pos_y += player_speed_dy
-
-    # Asegurar que el jugador permanezca dentro de la pantalla y ajustar el fondo
+    
     if screen_pos_x < safety_margin:
         screen_pos_x = safety_margin
-        offset_x = max(0, offset_x - player_speed)  # Mover el fondo a la izquierda
-
+        offset_x = max(0, offset_x - player_speed)
     if screen_pos_x > screen_width - safety_margin:
-            screen_pos_x = screen_width - safety_margin
-            offset_x = min(background_width - screen_width, offset_x + player_speed)  # Mover el fondo a la derecha
-    
+        screen_pos_x = screen_width - safety_margin
+        offset_x = min(background_width - screen_width, offset_x + player_speed)
     if screen_pos_y < safety_margin:
-            screen_pos_y = safety_margin
-            offset_y = max(0, offset_y - player_speed)  # Mover el fondo hacia arriba
-    
+        screen_pos_y = safety_margin
+        offset_y = max(0, offset_y - player_speed)
     if screen_pos_y > screen_height - safety_margin:
-            screen_pos_y = screen_height - safety_margin
-            offset_y = min(background_height - screen_height, offset_y + player_speed)  # Mover el fondo hacia abajo
+        screen_pos_y = screen_height - safety_margin
+        offset_y = min(background_height - screen_height, offset_y + player_speed)
     mouse_x, mouse_y = pygame.mouse.get_pos()
     dx, dy = mouse_x - screen_pos_x, mouse_y - screen_pos_y
     angle = math.atan2(dy, dx)
@@ -277,6 +291,9 @@ def render():
     for projectile in projectiles:
         projectile.update()
         projectile.draw(screen, offset_x, offset_y)  # Ajustar el dibujo de los proyectiles al offset del mapa
+    for projectile in projectiles_local:
+        projectile.update()
+        projectile.draw(screen, offset_x, offset_y)
     
     mini_map()
     
