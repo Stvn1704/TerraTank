@@ -4,9 +4,8 @@ import os
 from clases import Jugador
 # Inicializar Pygame
 pygame.init()
-def play():
+def play(nombre):
     # Obtener el nombre del jugador
-    nombre = input("Ingresa nombre: ")
     Jugador1 = Jugador(nombre)
 
     # Configuración de la pantalla
