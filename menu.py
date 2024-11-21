@@ -8,8 +8,8 @@ pygame.init()
 def set_Botones():
     Boton_alto = 50
     Boton_ancho = 220
-    boton_jugar = Buttons("Image/Start_BTN.png", "Image/Start_BTN.png", 300, 270, Boton_ancho, Boton_alto)
-    boton_salir = Buttons("Image/Exit_BTN.png", "Image/Exit_BTN.png", 300, 350, Boton_ancho, Boton_alto)
+    boton_jugar = Buttons("Image/Start_BTN.png", 300, 270, Boton_ancho, Boton_alto)
+    boton_salir = Buttons("Image/Exit_BTN.png", 300, 350, Boton_ancho, Boton_alto)
     return boton_jugar, boton_salir
 
 # Función para el menú principal
@@ -39,8 +39,8 @@ def Menu():
 
         screen.blit(fondo_1, (0, 0))
         screen.blit(logo, (230, 50))  
-        boton_jugar.draw(screen, pos_mouse)
-        boton_salir.draw(screen, pos_mouse)
+        boton_jugar.draw(screen)
+        boton_salir.draw(screen)
 
         pygame.display.flip()
 
