@@ -1,6 +1,7 @@
 import pygame
 from Button import *
 from ventana import *
+from client import *
 pygame.init()
 
 def set_Botones():

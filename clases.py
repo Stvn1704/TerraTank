@@ -3,8 +3,11 @@ class Jugador:
     vida = 100
     daño = 10
     size = 180
-    def __init__(self, nombre):
+    
+    
+    def __init__(self,puerto_local, nombre):
         self.nombre = nombre
+        self.id = puerto_local
     
     def recibir_daño(self, cantidad):
         self.vida -= cantidad

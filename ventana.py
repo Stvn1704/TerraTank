@@ -7,7 +7,7 @@ pygame.init()
 def play():
     # Obtener el nombre del jugador
     nombre = input("Ingresa nombre: ")
-    Jugador1 = Jugador(nombre)
+    Jugador1 = Jugador(1,nombre)
 
     # Configuración de la pantalla
     screen_width = 1280
@@ -23,7 +23,6 @@ def play():
 
     background_image = pygame.transform.scale(background_image, (screen_width * 3, screen_height * 3))
 
-    background_image = pygame.transform.scale(background_image, (screen_width * 2, screen_height * 2))
 
     # Obtener dimensiones de la imagen de fondo
     background_width = background_image.get_width()
@@ -188,3 +187,4 @@ def play():
 
 
     pygame.quit()
+play()
