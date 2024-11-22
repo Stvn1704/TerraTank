@@ -13,6 +13,7 @@ projectiles_local= []
 
 players = {}
 
+frame_index = 0 # Contador de cuadros para la animación
 last_shot_time = 0  # Tiempo del último disparo
 shoot_cooldown = 500
 
@@ -28,7 +29,6 @@ bullet_speed = 25  # Velocidad de las balas
 angle = 0  # Dirección del disparo en radianes.
 screen_pos_x1= screen_width // 2
 screen_pos_y1= screen_width // 2
-
 
 offset_x = offset_y = 0 # Inicializar offset (desplazamiento del fondo)
 
@@ -62,24 +62,12 @@ background_width, background_height = background_image.get_width(), background_i
 nombre = input("Ingresa nombre: ")
 Jugador1 = Jugador(puerto_local, nombre)
 
-# Función para cargar los cuadros de animación del avión desde el directorio Movimiento y los redimensiona para ajustarse al tamaño del jugador.
-def load_frames():
-    new_frame_size = (Jugador1.size, Jugador1.size)
-    for filename in sorted(os.listdir(frame_directory)):
-        if filename.endswith('.gif'):
-            frame = pygame.image.load(os.path.join(frame_directory, filename))
-            resized_frame = pygame.transform.scale(frame, new_frame_size)
-            frames.append(resized_frame)
-    print(f"Se han cargado {len(frames)} cuadros.")
-
-
 # Función para enviar datos al servidor
 def send_to_server(data):
     client_socket.sendall(json.dumps(data).encode("utf-8"))
 
 # Renderizar jugadores remotos
 
-            
 # Actualizar información de jugadores remotos
 def update_remote_players(server_data):
     global players
@@ -104,11 +92,9 @@ def update_projectiles(server_projectiles):
 
 # Función para recibir actualizaciones del servidor
 
-
 # Inicializar el juego
 def initialize_game():
     load_frames()
-
 
 # Función para manejar los eventos de entrada
 
@@ -186,13 +172,8 @@ def create_projectile(event):
     projectile_y = screen_pos_y + offset_y + 60 * math.sin(angle)
     projectiles_local.append(Projectile(projectile_x, projectile_y, angle))
     send_to_server({"type": "shot", "x": projectile_x, "y": projectile_y,"owner": Jugador1.id, "angle": angle,})
-send_to_server(
-    {"type": "shot",
-     "x": 0,
-     "y": 0,
-     "owner": "",
-     "angle": 0,
-     "traveled_distance": 0})
+
+#send_to_server({"type": "shot", "x": 0,"y": 0,"owner": "","angle": 0,"traveled_distance": 0})
 
 def update_players():
     global offset_x, offset_y
@@ -257,38 +238,36 @@ def mini_map():
     # Dibujar la posición del avión en el mini mapa
     pygame.draw.circle(screen, GREEN, (int(mini_map_screen_pos_x), int(mini_map_screen_pos_y)), 5)
 
-def load_image(frame_file):
-    # Cargar la imagen desde la carpeta raíz
-    frame = pygame.image.load(frame_file)
-    # Redimensionar la imagen si es necesario
-    resized_frame = pygame.transform.scale(frame, (Jugador1.size, Jugador1.size))
-    return resized_frame
-frame_file= "frame-1.gif"
-frame_image= load_image(frame_file)
 def draw_remote_players():
-    global players
+    global players, frames, frame_index
     with players_lock: #Bloquear el acceso durante la lectura
         for player_id, player in players.items():
             if str(player_id) != str(Jugador1.id):
                 player_screen_x = player.x
                 player_screen_y = player.y
-                rotated_image = pygame.transform.rotate(frame_image, -math.degrees(player.angle))
+                rotated_image = pygame.transform.rotate(frames[frame_index], -math.degrees(player.angle))
                 rotated_rect = rotated_image.get_rect(center=(player_screen_x, player_screen_y))
                 screen.blit(rotated_image, rotated_rect.topleft)
                 print(player_screen_x,player_screen_y,player.angle)
+
 # Renderizar todos los elementos
 def render():
+    global frames, frame_index
+
     # Dibujar el fondo desplazado. 
     # # Si el jugador se acerca a los bordes de la pantalla, el fondo se desplaza para simular un mapa más grande.
     screen.blit(background_image, (-offset_x, -offset_y))
 
     if frames:
+        # Actualizar el índice del cuadro 
+        frame_index = (frame_index + 1) % len(frames)  # Ciclar a través de frames[]
+
         mouse_x, mouse_y = pygame.mouse.get_pos()
         dx, dy = mouse_x - screen_pos_x, mouse_y - screen_pos_y
         angle = math.atan2(dy, dx)
         
         # Rotar el primer cuadro de animación según el ángulo hacia el mouse
-        rotated_image = pygame.transform.rotate(frame_image, -math.degrees(angle))
+        rotated_image = pygame.transform.rotate(frames[frame_index], -math.degrees(angle))
         rotated_rect = rotated_image.get_rect(center=(screen_pos_x, screen_pos_y))
         
         # Dibujar el avión rotado en la pantalla
@@ -300,12 +279,28 @@ def render():
     for projectile in projectiles:
         projectile.update()
         projectile.draw(screen, offset_x, offset_y)  # Ajustar el dibujo de los proyectiles al offset del mapa
-    for projectile in projectiles_local:
-        projectile.update()
-        projectile.draw(screen, offset_x, offset_y)
     
     mini_map()
-    
+
+# Función para cargar los cuadros de animación del avión desde el directorio Movimiento y los redimensiona para ajustarse al tamaño del jugador.
+def load_frames():
+    global frames
+    new_frame_size = (Jugador1.size, Jugador1.size)
+    for filename in sorted(os.listdir(frame_directory)):
+        if filename.endswith('.gif'):
+            frame = pygame.image.load(os.path.join(frame_directory, filename))
+            resized_frame = pygame.transform.scale(frame, new_frame_size)
+            frames.append(resized_frame)
+    print(f"Se han cargado {len(frames)} cuadros.")
+
+def load_image(frame_file):
+    # Cargar la imagen desde la carpeta raíz
+    frame = pygame.image.load(frame_file)
+    # Redimensionar la imagen si es necesario
+    resized_frame = pygame.transform.scale(frame, (Jugador1.size, Jugador1.size))
+    return resized_frame
+frame_file= "frame-1.gif"
+frame_image= load_image(frame_file)
 
 # Función principal del juego
 def main():
