@@ -1,11 +1,6 @@
 import pygame
 from Button import *
-from ventana import *
-<<<<<<< HEAD
 from client import *
-=======
-
->>>>>>> origin/fix-menu
 pygame.init()
 
 # Configuración de los botones

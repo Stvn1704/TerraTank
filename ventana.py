@@ -6,12 +6,7 @@ from clases import Jugador
 pygame.init()
 def play(nombre):
     # Obtener el nombre del jugador
-<<<<<<< HEAD
-    nombre = input("Ingresa nombre: ")
-    Jugador1 = Jugador(1,nombre)
-=======
     Jugador1 = Jugador(nombre)
->>>>>>> origin/fix-menu
 
     # Configuración de la pantalla
     screen_width = 1280
