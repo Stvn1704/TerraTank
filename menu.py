@@ -31,8 +31,8 @@ def Menu():
             if event.type == pygame.MOUSEBUTTONDOWN:
                 mouse_pos = event.pos
                 if boton_jugar.is_clicked(mouse_pos):
-                    pedir_nombre()  # Llamamos a la función para pedir el nombre
-                    return  # Terminamos el ciclo del menú, una vez que se ingresa el nombre
+                    play()  # Llamamos directamente a la función principal
+                    return  # Terminamos el ciclo del menú
                 if boton_salir.is_clicked(mouse_pos):
                     pygame.quit()
 
@@ -42,42 +42,6 @@ def Menu():
         boton_salir.draw(screen)
 
         pygame.display.flip()
-
-# Función para pedir el nombre del jugador
-def pedir_nombre():
-    screen = pygame.display.set_mode((800, 600))
-    font = pygame.font.Font(None, 48)
-    input_text = ""  # Aquí se almacenará el texto ingresado por el jugador
-
-    # Fondo y elementos de la pantalla
-    fondo_cargar = pygame.image.load("Image/BG.png")
-    fondo_1 = pygame.transform.scale(fondo_cargar, (800, 600))
-    prompt = font.render("Ingresa tu nombre:", True, (255, 255, 255))
-    input_surface = font.render(input_text, True, (255, 255, 255))
-    
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_RETURN:  # Cuando se presiona Enter, confirmamos el nombre
-                    if input_text:  # Solo iniciamos si el campo no está vacío
-                        play(input_text)  # Llamamos a la función principal pasando el nombre
-                        return  # Terminamos el ciclo de pedir el nombre
-                elif event.key == pygame.K_BACKSPACE:  # Si se presiona Backspace, eliminamos un caracter
-                    input_text = input_text[:-1]
-                else:
-                    input_text += event.unicode  # Añadimos el caracter ingresado
-
-            screen.blit(fondo_1, (0, 0))  # Fondo
-            screen.blit(prompt, (250, 200))  # Texto que indica que se ingrese el nombre
-            input_surface = font.render(input_text, True, (255, 255, 255))  # Texto del nombre ingresado
-            screen.blit(input_surface, (250, 300))  # Mostramos el nombre que se va escribiendo
-
-            pygame.display.flip()
-
-
 
 # Llamada inicial al menú
 Menu()

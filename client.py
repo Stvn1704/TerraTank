@@ -92,7 +92,7 @@ GREEN = (0, 255, 0)
 screen_width, screen_height = 1280, 720
 HOST, PORT = 'localhost', 8000
 
-def play():
+def play(nombre):
     # Initialize pygame and screen
     pygame.init()
     screen = pygame.display.set_mode((screen_width, screen_height))
@@ -119,7 +119,6 @@ def play():
     client.connect()
 
     # Get player name and create player
-    nombre = input("Ingresa nombre: ")
     client.player_name = nombre
     Jugador1 = Jugador(client.socket.getsockname()[1], nombre)
 
