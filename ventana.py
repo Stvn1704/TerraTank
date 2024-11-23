@@ -4,16 +4,20 @@ import os
 from clases import Jugador
 # Inicializar Pygame
 pygame.init()
-def play():
+def play(nombre):
     # Obtener el nombre del jugador
+<<<<<<< HEAD
     nombre = input("Ingresa nombre: ")
     Jugador1 = Jugador(1,nombre)
+=======
+    Jugador1 = Jugador(nombre)
+>>>>>>> origin/fix-menu
 
     # Configuración de la pantalla
     screen_width = 1280
     screen_height = 720
     screen = pygame.display.set_mode((screen_width, screen_height))
-    pygame.display.set_caption("TerraPlane")
+    pygame.display.set_caption("Nebula")
     WHITE = (255, 255, 255)
     BLACK = (0, 0, 0)
     GREEN = (0, 255, 0)
