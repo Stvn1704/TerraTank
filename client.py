@@ -249,29 +249,33 @@ def draw_remote_players():
 
 def render():
     global frame_index
-    
+
     screen.blit(background_image, (-offset_x, -offset_y))
-    
+
     if frames:
         frame_index = (frame_index + 1) % len(frames)
         mouse_x, mouse_y = pygame.mouse.get_pos()
-        angle = math.atan2(mouse_y - screen_height//2, 
-                          mouse_x - screen_width//2)
-        
-        rotated_image = pygame.transform.rotate(frames[frame_index], 
-                                              -math.degrees(angle))
-        rotated_rect = rotated_image.get_rect(
-            center=(screen_width//2, screen_height//2))
+        angle = math.atan2(mouse_y - screen_height // 2, mouse_x - screen_width // 2)
+
+        # Dibujar el avión
+        rotated_image = pygame.transform.rotate(frames[frame_index], -math.degrees(angle))
+        rotated_rect = rotated_image.get_rect(center=(screen_width // 2, screen_height // 2))
         screen.blit(rotated_image, rotated_rect.topleft)
-    
+
+        # Crear y dibujar hitbox
+        hitbox_points = create_hitbox(screen_width // 2, screen_height // 2, angle)
+        draw_hitbox(screen, hitbox_points)
+
+        # Verificar colisiones con la hitbox
+        check_collision_with_bullets(hitbox_points)
+
     draw_remote_players()
-    
+
     for projectile in projectiles:
         if projectile.update():
             projectile.draw(screen, offset_x, offset_y)
-    
-    mini_map()
 
+    mini_map()
 def receive_data_from_server():
     while True:
         data = client.receive()
@@ -284,23 +288,96 @@ def receive_data_from_server():
             if "projectiles" in data:
                 update_projectiles(data.get("projectiles", []))
 
+def create_hitbox(x, y, angle, size=60):
+    """
+    Crea una hitbox cuadrada alrededor del avión.
+    """
+    half_size = size // 2
+    # Coordenadas relativas del cuadrado antes de rotar
+    points = [
+        (-half_size, -half_size),  # Esquina superior izquierda
+        (half_size, -half_size),  # Esquina superior derecha
+        (half_size, half_size),   # Esquina inferior derecha
+        (-half_size, half_size)   # Esquina inferior izquierda
+    ]
+
+    # Rotar el cuadrado según el ángulo
+    rotated_points = [
+        (
+            x + px * math.cos(angle) - py * math.sin(angle),
+            y + px * math.sin(angle) + py * math.cos(angle)
+        )
+        for px, py in points
+    ]
+
+    return rotated_points
+
+def draw_hitbox(surface, points, color=(255, 0, 0)):
+    """
+    Dibuja la hitbox cuadrada para depuración.
+    """
+    pygame.draw.polygon(surface, color, points, 2)
+
+def is_point_in_triangle(p, a, b, c):
+    """
+    Verifica si un punto está dentro del triángulo definido por a, b y c.
+    Usa el área para determinar la inclusión.
+    """
+    def area(x1, y1, x2, y2, x3, y3):
+        return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0)
+
+    area_abc = area(*a, *b, *c)
+    area_pab = area(*p, *a, *b)
+    area_pbc = area(*p, *b, *c)
+    area_pca = area(*p, *c, *a)
+
+    return abs(area_abc - (area_pab + area_pbc + area_pca)) < 1e-6
+
+def is_point_in_square(p, square_points):
+    """
+    Verifica si un punto está dentro del cuadrado definido por sus cuatro puntos.
+    Usa una técnica de división en triángulos para hacerlo.
+    """
+    a, b, c, d = square_points
+
+    # Dividir el cuadrado en dos triángulos
+    return (
+        is_point_in_triangle(p, a, b, c) or  # Triángulo 1
+        is_point_in_triangle(p, a, c, d)    # Triángulo 2
+    )
+
+def check_collision_with_bullets(hitbox_points):
+    """
+    Verifica si alguna bala golpea la hitbox cuadrada.
+    """
+    global projectiles
+
+    for projectile in projectiles:
+        bullet_pos = (projectile.map_x, projectile.map_y)
+        if is_point_in_square(bullet_pos, hitbox_points):
+            print("¡Colisión detectada!")
+            projectiles.remove(projectile)  # Eliminar bala tras colisión
+
 def main():
     try:
         load_frames()
         client.send({"type": "new_player", "name": client.player_name})
-        
-        receive_thread = threading.Thread(target=receive_data_from_server, daemon=True)
-        receive_thread.start()
-        
+
+        threading.Thread(target=receive_data_from_server, daemon=True).start()
+
         running = True
         while running:
             running = handle_events()
             update_players()
             render()
             pygame.display.flip()
-            
+
+            if Jugador1.vida <= 0:
+                print("¡Has sido derrotado!")
+                running = False
+
     except Exception as e:
-        print(f"Error in game loop: {e}")
+        print(f"Error en el bucle del juego: {e}")
     finally:
         pygame.quit()
         client.close()
