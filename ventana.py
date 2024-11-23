@@ -18,7 +18,7 @@ def play(nombre):
     GREEN = (0, 255, 0)
 
     # Cargar imagen de fondo
-    background_image = pygame.image.load('fondo_nuevo.jpg')
+    background_image = pygame.image.load('Image/Background.png')
 
     background_image = pygame.transform.scale(background_image, (screen_width * 3, screen_height * 3))
 
