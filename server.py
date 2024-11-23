@@ -31,8 +31,8 @@ def handle_new_player(player_id, message):
             unique_id = str(uuid.uuid4())  # Generate unique ID
             players[unique_id] = {
                 "id": unique_id,  # Store the unique ID
-                "x": random.randint(0, 500),
-                "y": random.randint(0, 500),
+                "x": random.randint(200, 300),
+                "y": random.randint(200, 300),
                 "angle": random.randint(0, 360),
                 "is_alive": True,
                 "name": message.get("name", f"Player_{unique_id}")

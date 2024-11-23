@@ -87,7 +87,7 @@ projectiles_local = []
 frames = []
 frame_index = 0
 last_shot_time = 0
-shoot_cooldown = 500
+shoot_cooldown = 100
 offset_x = offset_y = 0
 players_lock = threading.Lock()
 
@@ -320,33 +320,6 @@ def draw_hitbox(surface, points, color=(255, 0, 0)):
     """
     pygame.draw.polygon(surface, color, points, 2)
 
-def is_point_in_triangle(p, a, b, c):
-    """
-    Verifica si un punto está dentro del triángulo definido por a, b y c.
-    Usa el área para determinar la inclusión.
-    """
-    def area(x1, y1, x2, y2, x3, y3):
-        return abs((x1 * (y2 - y3) + x2 * (y3 - y1) + x3 * (y1 - y2)) / 2.0)
-
-    area_abc = area(*a, *b, *c)
-    area_pab = area(*p, *a, *b)
-    area_pbc = area(*p, *b, *c)
-    area_pca = area(*p, *c, *a)
-
-    return abs(area_abc - (area_pab + area_pbc + area_pca)) < 1e-6
-
-def is_point_in_square(p, square_points):
-    """
-    Verifica si un punto está dentro del cuadrado definido por sus cuatro puntos.
-    Usa una técnica de división en triángulos para hacerlo.
-    """
-    a, b, c, d = square_points
-
-    # Dividir el cuadrado en dos triángulos
-    return (
-        is_point_in_triangle(p, a, b, c) or  # Triángulo 1
-        is_point_in_triangle(p, a, c, d)    # Triángulo 2
-    )
 
 def check_collision_with_bullets():
     """
