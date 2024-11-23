@@ -266,16 +266,14 @@ def render():
         hitbox_points = create_hitbox(screen_width // 2, screen_height // 2, angle)
         draw_hitbox(screen, hitbox_points)
 
-
+        # Verificar colisiones con la hitbox
+        check_collision_with_bullets()
 
     draw_remote_players()
 
     for projectile in projectiles:
         if projectile.update():
             projectile.draw(screen, offset_x, offset_y)
-            check_collision_with_bullets()
-            
-        
 
     mini_map()
 def receive_data_from_server():
@@ -353,18 +351,14 @@ def check_collision_with_bullets():
     Verifica si alguna bala golpea la hitbox cuadrada.
     """
     global projectiles, offset_x, offset_y, screen_height, screen_width
-    x1 = screen_width // 2 + offset_x
-    y1 = screen_height // 2 + offset_y
-    
+    x1= screen_width//2 + offset_x
+    y1= screen_height//2 + offset_y
     for projectile in projectiles:
         bullet_pos = (projectile.map_x, projectile.map_y)
-        
-        # Corregir las condiciones de colisión usando "and"
-        if (x1 - 30 < projectile.map_x < x1 + 30) and (y1 - 30 < projectile.map_y < y1 + 30):
+        if ((projectile.map_x>x1-100 & projectile.map_x<x1+100)&(projectile.map_y>y1-100 & projectile.map_y<y1+100)):
             print("¡Colisión detectada!")
             Jugador1.recibir_daño(10)
             projectiles.remove(projectile)  # Eliminar bala tras colisión
-
 
 def main():
     try:
@@ -382,13 +376,6 @@ def main():
 
             if Jugador1.vida <= 0:
                 print("¡Has sido derrotado!")
-                client.send({
-                    "type": "position",
-                    "x": 0,
-                    "y": 0,
-                    "angle":0,
-                    "is_alive":False
-                })
                 running = False
 
     except Exception as e:

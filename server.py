@@ -49,6 +49,8 @@ def update_player_position(player_id, message):
             players[player_id]["y"] = message["y"]
             players[player_id]["angle"] = message["angle"]
 
+            
+
 def add_projectile(player_id, message):
     global projectiles
     with lock:
